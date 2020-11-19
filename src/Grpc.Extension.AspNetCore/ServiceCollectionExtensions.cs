@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTracing;
 using System;
+using Jaeger.Senders.Thrift;
 
 namespace Grpc.Extension.AspNetCore
 {
@@ -78,7 +79,7 @@ namespace Grpc.Extension.AspNetCore
                .WithReporter(new Jaeger.Reporters.RemoteReporter.Builder()
                    .WithFlushInterval(TimeSpan.FromSeconds(5))
                    .WithMaxQueueSize(5)
-                   .WithSender(new Jaeger.Senders.UdpSender(jaegerOptions.AgentIp, jaegerOptions.AgentPort, 1024 * 5)).Build())
+                   .WithSender(new UdpSender(jaegerOptions.AgentIp, jaegerOptions.AgentPort, 1024 * 5)).Build())
                .Build();
                 return tracer;
             });

@@ -7,6 +7,7 @@ using Grpc.Extension.Client.LoadBalancer;
 using Grpc.Extension.Client.Model;
 using Grpc.Extension.Common;
 using Grpc.Extension.Discovery;
+using Jaeger.Senders.Thrift;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -164,7 +165,7 @@ namespace Grpc.Extension.Client
                     .WithReporter(new Jaeger.Reporters.RemoteReporter.Builder()
                         .WithFlushInterval(TimeSpan.FromSeconds(5))
                         .WithMaxQueueSize(5)
-                        .WithSender(new Jaeger.Senders.UdpSender(jaegerOptions.AgentIp, jaegerOptions.AgentPort, 1024 * 5)).Build())
+                        .WithSender(new UdpSender(jaegerOptions.AgentIp, jaegerOptions.AgentPort, 1024 * 5)).Build())
                     .Build();
                     return tracer;
                 });

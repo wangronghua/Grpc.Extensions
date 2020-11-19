@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FM.GrpcDashboard.Controllers
@@ -10,13 +9,15 @@ namespace FM.GrpcDashboard.Controllers
         [HttpGet("~/signin")]
         public ActionResult SignIn(string returnUrl)
         {
-            return Challenge(new AuthenticationProperties { RedirectUri = returnUrl }, OpenIdConnectDefaults.AuthenticationScheme);
+            return Challenge(new AuthenticationProperties { RedirectUri = returnUrl } );
+            //return Challenge(new AuthenticationProperties { RedirectUri = returnUrl }, OpenIdConnectDefaults.AuthenticationScheme);
         }
 
         [HttpGet("~/signout"), HttpPost("~/signout")]
         public ActionResult SignOut()
         {
-             return SignOut(CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme);
+            return SignOut(CookieAuthenticationDefaults.AuthenticationScheme);
+            //return SignOut(CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme);
         }
 
         [HttpGet("~/AccessDenied")]
