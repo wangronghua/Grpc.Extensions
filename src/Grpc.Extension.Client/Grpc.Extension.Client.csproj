@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <PackageId>FM.Grpc.Extensions.Client</PackageId>
+    <PackageId>Grpc.Extensions.Client</PackageId>
     <Authors>RabbitYi</Authors>
     <PackageProjectUrl>https://github.com/yileicn/Grpc.Extensions/</PackageProjectUrl>
     <Description>一个基于GRPC的简单微服务框架
@@ -30,12 +30,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.Core" Version="2.24.0" />
+    <PackageReference Include="Grpc.Core" Version="2.33.1" />
     <PackageReference Include="Jaeger" Version="0.2.2" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.10" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.10" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="3.1.10" />
   </ItemGroup>
 
   <ItemGroup>

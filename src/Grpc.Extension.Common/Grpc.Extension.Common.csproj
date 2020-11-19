@@ -8,17 +8,17 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>grpc,dashboard,consul,micorservice,opentracing,polly</PackageTags>
     <Authors>RabbitYi</Authors>
-    <PackageId>FM.Grpc.Extensions.Common</PackageId>
+    <PackageId>Grpc.Extensions.Common</PackageId>
     <FileVersion>1.4.7.1</FileVersion>
     <AssemblyVersion>1.4.7.1</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="AspectCore.Extensions.Reflection" Version="1.1.0" />
-    <PackageReference Include="Grpc.Core" Version="2.24.0" />
+    <PackageReference Include="Grpc.Core" Version="2.33.1" />
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.10" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.10" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />
     <PackageReference Include="Scrutor" Version="3.0.3" />

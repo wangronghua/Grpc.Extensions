@@ -5,7 +5,7 @@
     <Version>1.4.7</Version>
     <Authors>RabbitYi</Authors>
     <Company></Company>
-    <PackageId>FM.Grpc.Extensions.Abstract</PackageId>
+    <PackageId>Grpc.Extensions.Abstract</PackageId>
     <RepositoryUrl>https://github.com/yileicn/Grpc.Extensions/</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/yileicn/Grpc.Extensions/</PackageProjectUrl>
