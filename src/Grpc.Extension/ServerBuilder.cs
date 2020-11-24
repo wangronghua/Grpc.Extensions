@@ -269,9 +269,11 @@ namespace Grpc.Extension
                 server.Services.Add(serviceDefinition);
             }
             //添加服务IPAndPort
-            var ip = NetHelper.GetLocalIp();
-            var port = NetHelper.GetPort(_grpcServerOptions.ServiceAddress);
-            server.Ports.Add(new ServerPort(ip, port, ServerCredentials.Insecure));
+            //var ip = NetHelper.GetLocalIp();
+            //var port = NetHelper.GetPort(_grpcServerOptions.ServiceAddress);
+            var ipport = NetHelper.GetIPAndPort(_grpcServerOptions.ServiceAddress);
+
+            server.Ports.Add(new ServerPort(ipport.Item1, ipport.Item2, ServerCredentials.Insecure));
 
             return server;
         }
