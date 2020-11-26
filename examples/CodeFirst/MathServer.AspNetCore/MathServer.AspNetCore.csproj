@@ -19,7 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Grpc.Extension.AspNetCore\Grpc.Extension.AspNetCore.csproj" />
     <ProjectReference Include="..\..\..\src\Grpc.Extension.Client\Grpc.Extension.Client.csproj" />
     <ProjectReference Include="..\Math\Math.csproj" />
   </ItemGroup>

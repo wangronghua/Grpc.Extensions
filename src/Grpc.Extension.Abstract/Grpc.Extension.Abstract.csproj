@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.4.9</Version>
+    <Version>1.4.11</Version>
     <Authors>RabbitYi</Authors>
     <Company></Company>
     <PackageId>Grpc.Extensions.Abstract</PackageId>
@@ -17,8 +17,8 @@
 4.客户端中件间(认证，超时时间设置)
 5.DashBoard(远程调用，手动熔断，日志输出控制)
 6.Grpc CodeFirst</Description>
-    <AssemblyVersion>1.4.9</AssemblyVersion>
-    <FileVersion>1.4.9</FileVersion>
+    <AssemblyVersion>1.4.11</AssemblyVersion>
+    <FileVersion>1.4.11</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

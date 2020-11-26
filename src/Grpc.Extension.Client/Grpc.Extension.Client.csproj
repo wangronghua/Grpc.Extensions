@@ -13,12 +13,12 @@
 5.DashBoard(远程调用，手动熔断，日志输出控制)
 6.Grpc CodeFirst</Description>
     <Company />
-    <Version>1.4.9</Version>
+    <Version>1.4.11</Version>
     <RepositoryType>git</RepositoryType>
     <PackageTags>grpc,dashboard,consul,micorservice,opentracing,polly</PackageTags>
     <RepositoryUrl>https://github.com/yileicn/Grpc.Extensions/</RepositoryUrl>
-    <AssemblyVersion>1.4.9</AssemblyVersion>
-    <FileVersion>1.4.9</FileVersion>
+    <AssemblyVersion>1.4.11</AssemblyVersion>
+    <FileVersion>1.4.11</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -32,10 +32,10 @@
   <ItemGroup>
     <PackageReference Include="Grpc.Core" Version="2.33.1" />
     <PackageReference Include="Jaeger" Version="0.4.2" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="3.1.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.8" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="3.1.8" />
   </ItemGroup>
 
   <ItemGroup>
