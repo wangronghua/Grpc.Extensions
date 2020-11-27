@@ -59,12 +59,12 @@ namespace Grpc.Extension.Internal
         /// <param name="serviceName"></param>
         public static void AutoRegisterMethod(IGrpcService srv, ServerServiceDefinition.Builder builder, string package = null, string serviceName = null)
         {
-            var methods = srv.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+            var methods = srv.GetType().BaseType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
             foreach (var method in methods)
             {
                 if (!method.ReturnType.Name.StartsWith("Task")) continue;
                 var parameters = method.GetParameters();
-                if (parameters[parameters.Length-1].ParameterType != typeof(ServerCallContext) ||
+                if (parameters.Length < 2 || parameters[parameters.Length-1].ParameterType != typeof(ServerCallContext) ||
                     method.CustomAttributes.Any(x => x.AttributeType == typeof(NotGrpcMethodAttribute))) continue;
 
                 Type inputType = parameters[0].ParameterType;
@@ -76,6 +76,7 @@ namespace Grpc.Extension.Internal
                 var methodType = MethodType.Unary;
                 var reallyInputType = inputType;
                 var reallyOutputType = outputType;
+                string interceptorMethodName = "UnaryServerMethod";
 
                 //非一元方法
                 if ((inputType.IsGenericType || inputType2.IsGenericType))
@@ -89,12 +90,14 @@ namespace Grpc.Extension.Internal
                             methodType = MethodType.DuplexStreaming;
                             serverMethodType = typeof(DuplexStreamingServerMethod<,>);
                             reallyOutputType = inputType2.GenericTypeArguments[0];
+                            interceptorMethodName = "DuplexStreamingServerMethod";
                         }
                         else//客户端流
                         {
                             addMethod = clientStreamingAddMethod;
                             methodType = MethodType.ClientStreaming;
                             serverMethodType = typeof(ClientStreamingServerMethod<,>);
+                            interceptorMethodName = "ClientStreamingServerMethod";
                         }
                     }
                     else if (inputType2.Name == "IServerStreamWriter`1")//服务端流
@@ -103,12 +106,22 @@ namespace Grpc.Extension.Internal
                         methodType = MethodType.ServerStreaming;
                         serverMethodType = typeof(ServerStreamingServerMethod<,>);
                         reallyOutputType = inputType2.GenericTypeArguments[0];
+                        interceptorMethodName = "ServerStreamingServerMethod";
                     }
                 }
+
+                var interceptorType = typeof(GrpcServerInterceptor<,>).MakeGenericType(reallyInputType, reallyOutputType);
+                var interceptorInstance = Activator.CreateInstance(interceptorType, method, srv.GetType());
+                var interceptorMethod = interceptorType.GetMethod(interceptorMethodName);
+
                 var buildMethodResult = buildMethod.MakeGenericMethod(reallyInputType, reallyOutputType)
                     .Invoke(null, new object[] { srv, method.Name, package, serviceName, methodType });
-                Delegate serverMethodDelegate = method.CreateDelegate(serverMethodType
-                .MakeGenericType(reallyInputType, reallyOutputType), method.IsStatic ? null : srv);
+                //Delegate serverMethodDelegate = method.CreateDelegate(serverMethodType
+                //.MakeGenericType(reallyInputType, reallyOutputType), method.IsStatic ? null : srv);
+
+                Delegate serverMethodDelegate = interceptorMethod.CreateDelegate(serverMethodType
+                .MakeGenericType(reallyInputType, reallyOutputType), interceptorInstance);
+
                 addMethod.MakeGenericMethod(reallyInputType, reallyOutputType).Invoke(builder, new[] { buildMethodResult, serverMethodDelegate });
             }
         }
@@ -129,7 +142,7 @@ namespace Grpc.Extension.Internal
         {
             var serviceName = srvName ??
                               GrpcExtensionsOptions.Instance.GlobalService ??
-                              srv.GetType().Name;
+                              (srv.GetType().FullName.StartsWith("Castle.Proxies.") ? srv.GetType().Name.Substring(0, srv.GetType().Name.Length - 5) : srv.GetType().Name);
             var pkg = package ?? GrpcExtensionsOptions.Instance.GlobalPackage;
             if (!string.IsNullOrWhiteSpace(pkg))
             {
@@ -153,6 +166,76 @@ namespace Grpc.Extension.Internal
             var request = Marshallers.Create<TRequest>((arg) => ProtobufExtensions.Serialize<TRequest>(arg), data => ProtobufExtensions.Deserialize<TRequest>(data));
             var response = Marshallers.Create<TResponse>((arg) => ProtobufExtensions.Serialize<TResponse>(arg), data => ProtobufExtensions.Deserialize<TResponse>(data));
             return new Method<TRequest, TResponse>(mType, serviceName, methodName, request, response);
+        }
+    }
+
+    public class GrpcServerInterceptor<TRequest, TResponse>
+                where TRequest : class
+                where TResponse : class
+    {
+        private MethodInfo _method;
+        private Type _grpcType;
+        public GrpcServerInterceptor(MethodInfo method, Type grpcType)
+        {
+            _method = method;
+            _grpcType = grpcType;
+        }
+
+        public async Task<TResponse> UnaryServerMethod(TRequest request, ServerCallContext context)
+        {
+            TResponse result = null;
+            await MethodCore(async obj =>
+            {
+                result = await (obj as Task<TResponse>);
+            }, request, context);
+            return result;
+        }
+        public async Task<TResponse> ClientStreamingServerMethod(IAsyncStreamReader<TRequest> requestStream, ServerCallContext context)
+        {
+            TResponse result = null;
+            await MethodCore(async obj =>
+            {
+                result = await (obj as Task<TResponse>);
+            }, requestStream, context);
+            return result;
+        }
+
+        public Task ServerStreamingServerMethod(TRequest request, IServerStreamWriter<TResponse> responseStream, ServerCallContext context)
+        {
+            return MethodCore(obj =>
+            {
+                return obj as Task;
+            }, request, responseStream, context);
+        }
+        public Task DuplexStreamingServerMethod(IAsyncStreamReader<TRequest> requestStream, IServerStreamWriter<TResponse> responseStream, ServerCallContext context)
+        {
+            return MethodCore(obj =>
+            {
+                return obj as Task;
+            }, requestStream, responseStream, context);
+        }
+
+        private async Task MethodCore(Func<object, Task> func, params object[] objects)
+        {
+            if (ServerBuilder.GetScopeFunc == null)
+            {
+                throw new Exception("ServerBuilder GetScopeFunc 未设置");
+            }
+            if (ServerBuilder.GetServiceFunc == null)
+            {
+                throw new Exception("ServerBuilder GetServiceFunc 未设置");
+            }
+            using (ServerBuilder.GetScopeFunc())
+            {
+                if (_method.IsStatic)
+                {
+                    await func(_method.Invoke(null, objects));
+                }
+                else
+                {
+                    await func(_method.Invoke(ServerBuilder.GetServiceFunc(_grpcType.BaseType), objects));
+                }
+            }
         }
     }
 }

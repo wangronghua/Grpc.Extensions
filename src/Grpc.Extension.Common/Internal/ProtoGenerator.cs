@@ -172,10 +172,15 @@ namespace Grpc.Extension.Common.Internal
         public static void Gen(string dir,bool spiltProto)
         {
             if (ProtoInfo.Methods == null || ProtoInfo.Methods.Count == 0) return;
-            if (!Directory.Exists(dir))
+            //if (!Directory.Exists(dir))
+            //{
+            //    Directory.CreateDirectory(dir);
+            //}
+            if (Directory.Exists(dir))
             {
-                Directory.CreateDirectory(dir);
+                Directory.Delete(dir, true);
             }
+            Directory.CreateDirectory(dir);
 
             foreach (var grp in ProtoInfo.Methods.GroupBy(q => q.ServiceName))
             {

@@ -26,6 +26,9 @@ namespace Grpc.Extension
     /// </summary>
     public class ServerBuilder
     {
+        public static Func<IDisposable> GetScopeFunc;
+        public static Func<Type, object> GetServiceFunc;
+
         private readonly List<ServerInterceptor> _interceptors = new List<ServerInterceptor>();
         private readonly List<ServerServiceDefinition> _serviceDefinitions = new List<ServerServiceDefinition>();
         private readonly List<IGrpcService> _grpcServices = new List<IGrpcService>();
