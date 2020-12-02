@@ -178,9 +178,15 @@ namespace Grpc.Extension.Common.Internal
             //}
             if (Directory.Exists(dir))
             {
-                Directory.Delete(dir, true);
+                foreach (var file in new DirectoryInfo(dir).GetFiles())
+                {
+                    File.Delete(file.FullName);
+                }
             }
-            Directory.CreateDirectory(dir);
+            else
+            {
+                Directory.CreateDirectory(dir);
+            }
 
             foreach (var grp in ProtoInfo.Methods.GroupBy(q => q.ServiceName))
             {

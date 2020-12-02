@@ -28,6 +28,7 @@ namespace Grpc.Extension
     {
         public static Func<IDisposable> GetScopeFunc;
         public static Func<Type, object> GetServiceFunc;
+        public static Func<Exception, string, string> ExceptionProcessFunc;
 
         private readonly List<ServerInterceptor> _interceptors = new List<ServerInterceptor>();
         private readonly List<ServerServiceDefinition> _serviceDefinitions = new List<ServerServiceDefinition>();

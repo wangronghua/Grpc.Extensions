@@ -151,16 +151,26 @@ namespace Grpc.Extension.Internal
             #region 为生成proto收集信息
             if (!(srv is IGrpcBaseService) || GrpcExtensionsOptions.Instance.GenBaseServiceProtoEnable)
             {
-                ProtoInfo.Methods.Add(new ProtoMethodInfo
+                var protoMethodInfo = new ProtoMethodInfo
                 {
                     ServiceName = serviceName,
                     MethodName = methodName,
                     RequestName = typeof(TRequest).Name,
                     ResponseName = typeof(TResponse).Name,
                     MethodType = mType
-                });
-                ProtoGenerator.AddProto<TRequest>(typeof(TRequest).Name);
-                ProtoGenerator.AddProto<TResponse>(typeof(TResponse).Name);
+                };
+                if (typeof(TRequest).IsGenericType)
+                {
+                    protoMethodInfo.RequestName = $"{protoMethodInfo.RequestName.Substring(0, protoMethodInfo.RequestName.IndexOf('`'))}_{typeof(TRequest).GetGenericArguments()[0].Name}";
+                }
+                if (typeof(TResponse).IsGenericType)
+                {
+                    protoMethodInfo.ResponseName = $"{protoMethodInfo.ResponseName.Substring(0, protoMethodInfo.ResponseName.IndexOf('`'))}_{typeof(TResponse).GetGenericArguments()[0].Name}";
+                }
+
+                ProtoInfo.Methods.Add(protoMethodInfo);
+                ProtoGenerator.AddProto<TRequest>(protoMethodInfo.RequestName);
+                ProtoGenerator.AddProto<TResponse>(protoMethodInfo.ResponseName);
             }
             #endregion
             var request = Marshallers.Create<TRequest>((arg) => ProtobufExtensions.Serialize<TRequest>(arg), data => ProtobufExtensions.Deserialize<TRequest>(data));
@@ -171,7 +181,7 @@ namespace Grpc.Extension.Internal
 
     public class GrpcServerInterceptor<TRequest, TResponse>
                 where TRequest : class
-                where TResponse : class
+                where TResponse : class, IGrpcResponseMessage
     {
         private MethodInfo _method;
         private Type _grpcType;
@@ -184,38 +194,72 @@ namespace Grpc.Extension.Internal
         public async Task<TResponse> UnaryServerMethod(TRequest request, ServerCallContext context)
         {
             TResponse result = null;
-            await MethodCore(async obj =>
+            await MethodCore(async (obj, errorstr) =>
             {
-                result = await (obj as Task<TResponse>);
+                if (errorstr == null)
+                {
+                    result = await (obj as Task<TResponse>);
+                }
+                else
+                {
+                    result = CreateErrorResponse(errorstr);
+                }
             }, request, context);
             return result;
         }
         public async Task<TResponse> ClientStreamingServerMethod(IAsyncStreamReader<TRequest> requestStream, ServerCallContext context)
         {
             TResponse result = null;
-            await MethodCore(async obj =>
+            await MethodCore(async (obj, errorstr) =>
             {
-                result = await (obj as Task<TResponse>);
+                if (errorstr == null)
+                {
+                    result = await (obj as Task<TResponse>);
+                }
+                else
+                {
+                    result = CreateErrorResponse(errorstr);
+                }
             }, requestStream, context);
             return result;
         }
 
         public Task ServerStreamingServerMethod(TRequest request, IServerStreamWriter<TResponse> responseStream, ServerCallContext context)
         {
-            return MethodCore(obj =>
+            return MethodCore(async (obj, errorstr) =>
             {
-                return obj as Task;
+                if (errorstr == null)
+                {
+                    await (obj as Task);
+                }
+                else
+                {
+                    await responseStream.WriteAsync(CreateErrorResponse(errorstr));
+                }
             }, request, responseStream, context);
         }
         public Task DuplexStreamingServerMethod(IAsyncStreamReader<TRequest> requestStream, IServerStreamWriter<TResponse> responseStream, ServerCallContext context)
         {
-            return MethodCore(obj =>
+            return MethodCore(async (obj, errorstr) =>
             {
-                return obj as Task;
+                if (errorstr == null)
+                {
+                    await (obj as Task);
+                }
+                else
+                {
+                    await responseStream.WriteAsync(CreateErrorResponse(errorstr));
+                }
             }, requestStream, responseStream, context);
         }
 
-        private async Task MethodCore(Func<object, Task> func, params object[] objects)
+        private TResponse CreateErrorResponse(string errorstr)
+        {
+            var result = Activator.CreateInstance(typeof(TResponse)) as TResponse;
+            result.ErrorStr = errorstr;
+            return result;
+        }
+        private async Task MethodCore(Func<object, string, Task> func, params object[] objects)
         {
             if (ServerBuilder.GetScopeFunc == null)
             {
@@ -227,13 +271,30 @@ namespace Grpc.Extension.Internal
             }
             using (ServerBuilder.GetScopeFunc())
             {
-                if (_method.IsStatic)
+                try
                 {
-                    await func(_method.Invoke(null, objects));
+                    if (_method.IsStatic)
+                    {
+                        await func(_method.Invoke(null, objects), null);
+                    }
+                    else
+                    {
+                        await func(_method.Invoke(ServerBuilder.GetServiceFunc(_grpcType.BaseType), objects), null);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    await func(_method.Invoke(ServerBuilder.GetServiceFunc(_grpcType.BaseType), objects));
+                    try
+                    {
+                        string errormsg = ex.Message;
+                        if (ServerBuilder.ExceptionProcessFunc != null)
+                        {
+                            errormsg = ServerBuilder.ExceptionProcessFunc.Invoke(ex, _grpcType.BaseType.FullName);
+                        }
+                        await func(null, errormsg);
+                    }
+                    catch
+                    { }
                 }
             }
         }
